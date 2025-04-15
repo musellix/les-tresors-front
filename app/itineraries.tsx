@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { iskorriganName, macarons } from '../constants/images';
 
+// Mapping thème → couleur principale
+const themeColors: Record<string, string> = {
+    SPORT: '#E86430',
+    HISTOIRE: '#B92C42',
+    MER: '#0085AD',
+    URBAIN: '#8854D0',
+    // Ajoute d'autres si nécessaire
+};
+
 type Itinerary = {
     id: number;
     title: string;
@@ -15,13 +24,11 @@ type Itinerary = {
     duration: string;
     accessibility: string;
     photoUrl: string | null;
-  };
+};
 
 export default function ItinerairesScreen() {
   const [data, setData] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
-
-
 
   useEffect(() => {
     fetch('http://localhost:3011/itinerary')
@@ -44,30 +51,52 @@ export default function ItinerairesScreen() {
         data={data}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => { 
-
-            // Check if the theme name is a valid Korrigan name
             const themeKey = item.theme.name.toLowerCase().replace(/\s/g, '_');
-            const korrigan = iskorriganName(themeKey) ? themeKey : 'korry_gan'
-            console.log(themeKey)
+            const korrigan = iskorriganName(themeKey) ? themeKey : 'korry_gan';
+            const color = themeColors[item.theme.theme.toUpperCase()] || '#333';
             
             return (
-                <View style={styles.item}>
-                    {macarons[korrigan] && (
-                        <Image 
-                            source={macarons[korrigan]}
-                            style={{ width: 80, height: 80, marginBottom: 8 }}
-                        />
-                    )}
-
-                    <Text style={styles.title}>{item.title}</Text>
-                    <Text style={styles.theme}>{item.theme.name}</Text>
-
-
-                    <Text>Difficulty: {item.difficulty}</Text>
-                    <Text>Duration: {item.duration}</Text>
-                    <Text>Type: {item.typeOfCache}</Text>
+                <View style={styles.card}>
+                  <View style={styles.topSection}>
+                    <Image source={macarons[korrigan]} style={styles.image} />
+                    <View style={styles.content}>
+                      {/* Section principale : Titre, catégorie, etc. */}
+                      <Text style={[styles.themeTag, { color }]}>{item.theme.theme.toUpperCase()}</Text>
+                      <View style={styles.locationBlock}>
+                        <Text style={styles.locationCity}>📍 Pays de Saint-Méen - Montauban</Text>
+                        <Text style={styles.locationDistance}>à 42.47 km de moi</Text>
+                      </View>
+                      <Text style={styles.title}>{item.title}</Text>
+                    </View>
+                  </View>
+              
+                  {/* Section des détails en bas */}
+                  <View style={styles.detailsRow}>
+                    <View style={styles.detailItem}>
+                      <Text style={styles.label}>CACHE</Text>
+                      <Text style={[styles.value, { color }]}>{item.typeOfCache}</Text>
+                    </View>
+                    <View style={styles.separator} />
+                    <View style={styles.detailItem}>
+                      <Text style={styles.label}>NIVEAU</Text>
+                      <Text>
+                        <Text style={[styles.filledCircle, { color }]}>{'●'.repeat(item.difficulty)}</Text>
+                        <Text style={[styles.filledCircle, { color: styles.label.color }]}>{'●'.repeat(5 - item.difficulty)}</Text>
+                      </Text>
+                    </View>
+                    <View style={styles.separator} />
+                    <View style={styles.detailItem}>
+                      <Text style={styles.label}>DURÉE</Text>
+                      <Text style={[styles.value, { color }]}>{item.duration}</Text>
+                    </View>
+                    <View style={styles.separator} />
+                    <View style={styles.detailItem}>
+                      <Text style={styles.label}>DISTANCE</Text>
+                      <Text style={[styles.value, { color }]}>11 km</Text>
+                    </View>
+                  </View>
                 </View>
-            )
+              );
         }}
       />
     </View>
@@ -75,24 +104,94 @@ export default function ItinerairesScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        padding: 16, 
-        backgroundColor: '#E8E3D6'
+    container: {
+      flex: 1,
+      backgroundColor: '#929082',
     },
-    item: {
-      marginBottom: 12,
+    card: {
+      flexDirection: 'column',
+      backgroundColor: 'white',
       padding: 16,
-      backgroundColor: '#eaeaea',
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 6,
+      elevation: 3,
+      marginBottom: 16,
+      marginHorizontal: 16
+    },
+    topSection: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: 16,
+    },
+    image: {
+      width: 80,
+      height: 80,
       borderRadius: 8,
+      marginRight: 16,
+    },
+    content: {
+      flex: 1,
+    },
+    themeTag: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+    locationBlock: {
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      marginBottom: 8,
+    },
+    locationCity: {
+      fontSize: 16,
+      color: '#888888',
+    },
+    locationDistance: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: '#000000',
+      marginLeft: 8,
     },
     title: {
+      fontSize: 20,
       fontWeight: 'bold',
-      fontSize: 18,
-      marginBottom: 4,
+      color: '#333',
+      textTransform: 'uppercase',
     },
-    theme: {
-      fontStyle: 'italic',
-      marginBottom: 4,
+    detailsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-evenly',
+      width: '100%',
     },
-});
+    detailItem: {
+      alignItems: 'center',
+      flex: 1,
+    },
+    label: {
+      fontSize: 16, 
+      color: '#888',
+      textTransform: 'uppercase', 
+      marginBottom: 4, 
+    },
+    value: {
+      fontSize: 20, 
+      fontWeight: 'bold', 
+      color: '#333',
+    },
+    filledCircle: {
+      fontSize: 24, 
+      fontWeight: 'bold',
+      fontFamily: 'monospace',
+      color: '#333',
+    },
+    separator: {
+      width: 2,
+      height: 40,
+      backgroundColor: '#C7C7C7',
+      marginHorizontal: 8,
+    },
+  });
