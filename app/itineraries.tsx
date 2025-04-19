@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import * as Location from 'expo-location';
 import { iskorriganName, macarons } from '../constants/images';
+import { calculateDistance } from '@/utils/geoUtils';
 
 // Mapping thème → couleur principale
 const themeColors: Record<string, string> = {
@@ -31,21 +33,40 @@ type Itinerary = {
     photoUrl: string | null;
 };
 
+
+
 export default function ItinerairesScreen() {
   const [data, setData] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPosition, setCurrentPosition] = useState({ latitude: 0, longitude: 0 });
 
   useEffect(() => {
-    fetch('http://localhost:3011/itinerary')
-      .then((res) => res.json())
-      .then((json) => {
-        setData(json);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    (async () => {
+        // Demander la permission de localisation
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.error('Permission de localisation refusée');
+          return;
+        }
+
+        // Obtenir la position actuelle
+        const location = await Location.getCurrentPositionAsync({});
+        setCurrentPosition({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        fetch('http://localhost:3011/itinerary')
+          .then((res) => res.json())
+          .then((json) => {
+            setData(json);
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error(err);
+            setLoading(false);
+          });
+      })();
   }, []);
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} />;
@@ -59,6 +80,13 @@ export default function ItinerairesScreen() {
             const themeKey = item.theme.name.toLowerCase().replace(/\s/g, '_');
             const korrigan = iskorriganName(themeKey) ? themeKey : 'korry_gan';
             const color = themeColors[item.theme.theme.toUpperCase()] || '#333';
+
+            const distance = calculateDistance(
+              currentPosition.latitude,
+              currentPosition.longitude,
+              item.startLocation.latitude,
+              item.startLocation.longitude
+            );
             
             return (
                 <View style={styles.card}>
@@ -69,7 +97,7 @@ export default function ItinerairesScreen() {
                       <Text style={[styles.themeTag, { color }]}>{item.theme.theme.toUpperCase()}</Text>
                       <View style={styles.locationBlock}>
                         <Text style={styles.locationCity}>📍 {item.startCity}</Text>
-                        <Text style={styles.locationDistance}>à 42.47 km de moi</Text>
+                        <Text style={styles.locationDistance}>à {distance.toFixed(2)} km de moi</Text>
                       </View>
                       <Text style={styles.title}>{item.title}</Text>
                     </View>
@@ -97,7 +125,7 @@ export default function ItinerairesScreen() {
                     <View style={styles.separator} />
                     <View style={styles.detailItem}>
                       <Text style={styles.label}>DISTANCE</Text>
-                      <Text style={[styles.value, { color }]}>11 km</Text>
+                      <Text style={[styles.value, { color }]}>- km</Text>
                     </View>
                   </View>
                 </View>
