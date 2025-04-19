@@ -14,6 +14,11 @@ const themeColors: Record<string, string> = {
 type Itinerary = {
     id: number;
     title: string;
+    startCity: string;
+    startLocation: {
+      latitude: number;
+      longitude: number;
+    };
     theme: {
       id: number;
       name: string;
@@ -63,7 +68,7 @@ export default function ItinerairesScreen() {
                       {/* Section principale : Titre, catégorie, etc. */}
                       <Text style={[styles.themeTag, { color }]}>{item.theme.theme.toUpperCase()}</Text>
                       <View style={styles.locationBlock}>
-                        <Text style={styles.locationCity}>📍 Pays de Saint-Méen - Montauban</Text>
+                        <Text style={styles.locationCity}>📍 {item.startCity}</Text>
                         <Text style={styles.locationDistance}>à 42.47 km de moi</Text>
                       </View>
                       <Text style={styles.title}>{item.title}</Text>
