@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import * as Location from 'expo-location';
 import { iskorriganName, macarons } from '../constants/images';
 import { calculateDistance } from '@/utils/geoUtils';
+import { useRouter } from 'expo-router';
+import { Routes } from '@/routes';
 
 // Mapping thème → couleur principale
 const themeColors: Record<string, string> = {
@@ -39,6 +41,7 @@ export default function ItinerairesScreen() {
   const [data, setData] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPosition, setCurrentPosition] = useState({ latitude: 0, longitude: 0 });
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -89,6 +92,9 @@ export default function ItinerairesScreen() {
             );
             
             return (
+              <TouchableOpacity
+                onPress={() => router.push(`/itinerary?id=${item.id}`)}
+              >
                 <View style={styles.card}>
                   <View style={styles.topSection}>
                     <Image source={macarons[korrigan]} style={styles.image} />
@@ -129,7 +135,8 @@ export default function ItinerairesScreen() {
                     </View>
                   </View>
                 </View>
-              );
+              </TouchableOpacity>
+            );
         }}
       />
     </View>
